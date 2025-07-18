@@ -1,0 +1,152 @@
+{
+    "name": "Debt Collection Agent",
+    "nodes": [
+        {
+            "name": "start",
+            "type": "conversation",
+            "isStart": true,
+            "metadata": {
+                "position": {
+                    "x": 0,
+                    "y": 0
+                }
+            },
+            "prompt": "Hello, this is ABC Debt Services. This is an attempt to collect a debt. May I confirm I’m speaking with {{customer_name}}?",
+            "messagePlan": {
+                "firstMessage": "Hello, this is ABC Debt Services. May I confirm your name, please?"
+            }
+        },
+        {
+            "name": "state_balance",
+            "type": "conversation",
+            "metadata": {
+                "position": {
+                    "x": 0,
+                    "y": 200
+                }
+            },
+            "prompt": "Thanks, {{customer_name}}. Your current balance is ${{balance}}. Would you like to pay now, schedule a callback, talk to an agent, or end the call?",
+            "variableExtractionPlan": {
+                "output": [
+                    {
+                        "type": "string",
+                        "title": "intent",
+                        "description": "User intent: pay_now, schedule_callback, talk_to_agent, end_call"
+                    }
+                ]
+            }
+        },
+        {
+            "name": "pay_now",
+            "type": "conversation",
+            "metadata": {
+                "position": {
+                    "x": -200,
+                    "y": 400
+                }
+            },
+            "prompt": "Understood. I’ll send you a secure payment link via SMS now."
+        },
+        {
+            "name": "schedule_callback",
+            "type": "conversation",
+            "metadata": {
+                "position": {
+                    "x": 0,
+                    "y": 400
+                }
+            },
+            "prompt": "Sure. When would you prefer us to call you back?",
+            "variableExtractionPlan": {
+                "output": [
+                    {
+                        "type": "string",
+                        "title": "callback_time",
+                        "description": "Preferred callback time"
+                    }
+                ]
+            }
+        },
+        {
+            "name": "confirm_callback",
+            "type": "conversation",
+            "metadata": {
+                "position": {
+                    "x": 0,
+                    "y": 600
+                }
+            },
+            "prompt": "Got it. We’ll call you back at {{callback_time}}. Thank you!"
+        },
+        {
+            "name": "end_call",
+            "type": "tool",
+            "metadata": {
+                "position": {
+                    "x": 200,
+                    "y": 600
+                }
+            },
+            "tool": {
+                "type": "endCall",
+                "messages": [
+                    {
+                        "type": "request-start",
+                        "content": "Thank you for your time. Goodbye!",
+                        "blocking": true
+                    }
+                ]
+            }
+        }
+    ],
+    "edges": [
+        {
+            "from": "start",
+            "to": "state_balance",
+            "condition": {
+                "type": "ai",
+                "prompt": "User confirms identity"
+            }
+        },
+        {
+            "from": "state_balance",
+            "to": "pay_now",
+            "condition": {
+                "type": "ai",
+                "prompt": "User wants to pay now"
+            }
+        },
+        {
+            "from": "state_balance",
+            "to": "schedule_callback",
+            "condition": {
+                "type": "ai",
+                "prompt": "User wants to schedule callback"
+            }
+        },
+        {
+            "from": "state_balance",
+            "to": "end_call",
+            "condition": {
+                "type": "ai",
+                "prompt": "User wants to end the call"
+            }
+        },
+        {
+            "from": "pay_now",
+            "to": "end_call"
+        },
+        {
+            "from": "schedule_callback",
+            "to": "confirm_callback",
+            "condition": {
+                "type": "ai",
+                "prompt": "User provides a callback time"
+            }
+        },
+        {
+            "from": "confirm_callback",
+            "to": "end_call"
+        }
+    ]
+}
